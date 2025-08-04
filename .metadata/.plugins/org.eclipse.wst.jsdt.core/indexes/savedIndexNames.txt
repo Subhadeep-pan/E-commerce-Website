@@ -1,0 +1,9 @@
+INDEX VERSION 1.4+E:\ARDENT\PROJECT\E_Commerce\E-Commerce\.metadata\.plugins\org.eclipse.wst.jsdt.core\indexes
+3370588010.index
+1601275615.index
+2276187175.index
+2276187175.index
+1119671468.index
+4032104904.index
+515148405.index
+1428656133.index

@@ -1,0 +1,80 @@
+package com.example.upload.controller;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.example.upload.model.FileUpload;
+import com.example.upload.repository.FileUploadRepository;
+
+@Controller
+public class UploadController {
+
+    @Autowired
+    private FileUploadRepository repo;
+
+    // External folder at project root
+    private static final String UPLOAD_DIR = "uploads/";
+
+    @GetMapping("/uploadForm")
+    public String showForm() {
+        return "upload";
+    }
+
+    @PostMapping("/uploadFile")
+    public String uploadFile(@RequestParam("file") MultipartFile file, Model model) {
+        if (file.isEmpty()) {
+            model.addAttribute("message", "Please select a file!");
+            return "error";
+        }
+
+        try {
+            // Ensure upload directory exists
+            File dir = new File(UPLOAD_DIR);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            // Save file
+            Path destinationPath = Paths.get(UPLOAD_DIR)
+                    .resolve(Paths.get(file.getOriginalFilename()))
+                    .normalize()
+                    .toAbsolutePath();
+
+            Files.copy(file.getInputStream(), destinationPath, StandardCopyOption.REPLACE_EXISTING);
+
+            // Save relative path in DB
+            FileUpload upload = new FileUpload();
+            upload.setFileName(file.getOriginalFilename());
+            upload.setFilePath("/uploads/" + file.getOriginalFilename());
+            repo.save(upload);
+
+            model.addAttribute("message", "File uploaded successfully!");
+            model.addAttribute("path", "/uploads/" + file.getOriginalFilename());
+
+            return "success";
+        } catch (IOException e) {
+            e.printStackTrace();
+            model.addAttribute("message", "File upload failed!");
+            return "error";
+        }
+    }
+    
+    @GetMapping("/files")
+    public String listFiles(Model model) {
+        model.addAttribute("files", repo.findAll());
+        return "files";  // new JSP page to show all uploaded files
+    }
+}
+
